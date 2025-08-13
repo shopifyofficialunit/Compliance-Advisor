@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Your Compliance Advisor</title>
+
+<!-- Inter font + icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+  :root{
+    --shopify-green:#95BF47;     /* official primary */
+    --shopify-green-dark:#5E8E3E;/* gradient mate */
+    --bg:#F4F6F8;
+    --card:#FFFFFF;
+    --text:#1F2937;
+    --muted:#6B7280;
+    --ring:#E5E7EB;
+    --ok:#16A34A;
+    --ok-soft:#DCFCE7;
+    --warn:#F59E0B;
+    --warn-soft:#FEF3C7;
+    --shadow:0 10px 30px rgba(0,0,0,.08);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    color:var(--text);
+    background:var(--bg);
+  }
+
+  /* Fades */
+  .fade{opacity:0; transition:opacity .6s ease}
+  .fade.show{opacity:1}
+
+  /* ===== Loading View ===== */
+  .loading-wrap{
+    position:fixed; inset:0;
+    display:grid; place-items:center;
+    background:linear-gradient(135deg,var(--shopify-green) 0%, var(--shopify-green-dark) 100%);
+    padding:24px;
+  }
+  .loading-card{
+    width:min(560px,92vw);
+    background:var(--card);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    padding:28px 24px;
+    text-align:center;
+  }
+  .logo{
+    width:56px; height:auto; display:block; margin:0 auto 12px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.12));
+  }
+  .title{font-size:1.25rem;font-weight:700;margin:2px 0 6px}
+  .sub{color:var(--muted);font-size:.95rem;margin:0 0 18px}
+
+  .status-list{
+    display:grid; gap:8px; margin:14px 0 18px;
+  }
+  .status-item{
+    display:flex; align-items:center; gap:8px;
+    justify-content:center;
+    color:#374151; font-size:.92rem;
+  }
+  .status-dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--ring);
+  }
+  .status-item.active .status-dot{ background:var(--shopify-green); }
+  .status-item.active{ font-weight:600; }
+
+  .bar{
+    width:100%; height:10px; border-radius:999px;
+    background:#E5E7EB; overflow:hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.06);
+  }
+  .bar>span{
+    display:block; height:100%; width:0%;
+    background:linear-gradient(90deg,var(--shopify-green),var(--shopify-green-dark));
+    transition:width .2s linear;
+  }
+  .pct{margin-top:8px; color:var(--muted); font-size:.9rem}
+
+  /* ===== Advisor View ===== */
+  .advisor-wrap{
+    padding:28px 16px 48px;
+    display:none; /* revealed after load */
+  }
+  .hero{
+    width:min(860px,94vw); margin:0 auto 18px;
+    background:linear-gradient(135deg,var(--shopify-green) 0%, var(--shopify-green-dark) 100%);
+    border-radius:18px;
+    padding:28px 18px 70px;
+    color:white; text-align:center;
+    box-shadow:var(--shadow);
+    position:relative;
+  }
+  .hero .logo{filter:none; margin-bottom:8px}
+  .hero h1{margin:6px 0 4px; font-size:1.6rem}
+  .hero p{margin:0; opacity:.92}
+
+  .card{
+    width:min(820px,94vw); margin:-52px auto 0;
+    background:var(--card); border-radius:18px;
+    box-shadow:var(--shadow);
+    padding:22px 18px;
+  }
+  .profile{
+    display:flex; gap:14px; align-items:center; justify-content:center;
+    flex-wrap:wrap; text-align:center;
+  }
+  .avatar{
+    width:88px;height:88px;border-radius:50%;
+    display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--shopify-green),var(--shopify-green-dark));
+    color:white; font-weight:800; font-size:2rem;
+    box-shadow:0 8px 24px rgba(94,142,62,.35);
+  }
+  .name{font-weight:700;font-size:1.15rem;margin:2px 0 2px}
+  .role{color:var(--muted);font-size:.95rem;margin:0}
+  .badge{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 12px; border-radius:999px; font-weight:600; font-size:.85rem;
+    background:var(--ok-soft); color:var(--ok); margin-top:8px;
+  }
+  .badge i{font-size:.95rem}
+
+  .grid{
+    display:grid; gap:12px; margin:18px 0 8px;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .kpi{
+    border:1px solid var(--ring); border-radius:14px;
+    padding:14px; text-align:center;
+  }
+  .kpi .k{display:block; font-size:.8rem; color:var(--muted)}
+  .kpi .v{display:block; font-weight:800; font-size:1.15rem; margin-top:2px}
+  .kpi i{margin-right:6px; color:var(--shopify-green-dark)}
+
+  .note{
+    margin:14px 0 6px; padding:12px 14px; border-radius:12px;
+    background:var(--warn-soft); color:#92400e; font-size:.92rem;
+    display:flex; align-items:center; gap:10px; justify-content:center;
+  }
+  .links{
+    display:grid; gap:10px; margin-top:14px;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    text-decoration:none; color:white; font-weight:600; font-size:.95rem;
+    padding:12px 10px; border-radius:12px; box-shadow:var(--shadow);
+    transition:transform .12s ease, filter .2s ease;
+    will-change: transform;
+  }
+  .btn:hover{ transform: translateY(-2px); filter:brightness(1.02); }
+  .btn:active{ transform: translateY(0); }
+
+  .btn.whatsapp{ background:#25D366; }
+  .btn.telegram{ background:#0088cc; }
+  .btn.gmail{ background:#EA4335; }
+
+  /* Responsive */
+  @media (max-width: 640px){
+    .grid{ grid-template-columns:1fr 1fr; }
+    .links{ grid-template-columns:1fr; }
+    .hero h1{ font-size:1.35rem; }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce){
+    .fade, .btn{ transition:none !important; }
+    .bar>span{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== LOADING VIEW ========== -->
+<section id="loading" class="loading-wrap fade show" aria-live="polite">
+  <div class="loading-card">
+    <!-- Reliable Shopify logo (Wikipedia CDN) -->
+    <img class="logo" alt="Shopify" 
+         src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Shopify_logo_2018.svg">
+    <h2 class="title">Compliance Case Review</h2>
+    <p class="sub">Connecting you with a dedicated Shopify advisor</p>
+
+    <div class="status-list" id="statusList">
+      <div class="status-item active"><span class="status-dot"></span>Verifying compliance details</div>
+      <div class="status-item"><span class="status-dot"></span>Reviewing case history</div>
+      <div class="status-item"><span class="status-dot"></span>Locating available advisor</div>
+    </div>
+
+    <div class="bar"><span id="bar"></span></div>
+    <div class="pct" id="pct">0%</div>
+  </div>
+</section>
+
+<!-- ========== ADVISOR VIEW ========== -->
+<main id="advisor" class="advisor-wrap fade" aria-hidden="true">
+  <header class="hero">
+    <img class="logo" alt="Shopify"
+         src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Shopify_logo_2018.svg">
+    <h1>Your Compliance Advisor</h1>
+    <p>Ready to assist with your case</p>
+  </header>
+
+  <section class="card">
+    <div class="profile">
+      <div class="avatar" aria-hidden="true">LM</div>
+      <div>
+        <div class="name">Leo Manual</div>
+        <p class="role">Shopify Compliance Specialist</p>
+        <span class="badge"><i class="fa-solid fa-circle-check"></i> Active</span>
+      </div>
+    </div>
+
+    <div class="grid" role="group" aria-label="Advisor stats">
+      <div class="kpi">
+        <span class="k"><i class="fa-solid fa-user-tie"></i>Expertise</span>
+        <span class="v">Expert · 5+ years</span>
+      </div>
+      <div class="kpi">
+        <span class="k"><i class="fa-solid fa-list-check"></i>Tasks Completed</span>
+        <span class="v">154</span>
+      </div>
+      <div class="kpi">
+        <span class="k"><i class="fa-solid fa-signal"></i>Status</span>
+        <span class="v" style="color:var(--ok)">Active</span>
+      </div>
+    </div>
+
+    <div class="note"><i class="fa-solid fa-clock"></i>
+      Connect with your assigned advisor within the next 24 Hours to review your case
+    </div>
+
+    <div class="links">
+      <a class="btn whatsapp" href="https://watext.me/Support-official-" target="_blank" rel="noopener">
+        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+      </a>
+      <a class="btn telegram" href="https://t.me/+2349168820117" target="_blank" rel="noopener">
+        <i class="fa-brands fa-telegram"></i> Telegram
+      </a>
+      <a class="btn gmail" href="mailto:leoburnettdigital02@gmail.com">
+        <i class="fa-solid fa-envelope"></i> Gmail
+      </a>
+    </div>
+  </section>
+</main>
+
+<script>
+  // ====== Loading logic (20s total) ======
+  const bar = document.getElementById('bar');
+  const pct = document.getElementById('pct');
+  const loading = document.getElementById('loading');
+  const advisor = document.getElementById('advisor');
+  const statusItems = Array.from(document.querySelectorAll('#statusList .status-item'));
+
+  let progress = 0;
+  const totalMs = 20000;      // 20 seconds
+  const stepMs  = 200;        // update every 200ms
+  const steps   = totalMs / stepMs; // 100 steps
+  const perStep = 100 / steps;
+
+  // Rotate active status roughly every third of the time
+  const switchMarks = [33, 66]; // %
+  let nextSwitchIdx = 0;
+
+  const timer = setInterval(() => {
+    progress = Math.min(100, progress + perStep);
+    bar.style.width = progress.toFixed(0) + '%';
+    pct.textContent  = progress.toFixed(0) + '%';
+
+    if (nextSwitchIdx < switchMarks.length && progress >= switchMarks[nextSwitchIdx]) {
+      statusItems.forEach(el => el.classList.remove('active'));
+      statusItems[nextSwitchIdx + 1].classList.add('active');
+      nextSwitchIdx++;
+    }
+
+    if (progress >= 100) {
+      clearInterval(timer);
+      // Fade out loading, fade in advisor
+      loading.classList.remove('show');
+      setTimeout(() => {
+        loading.style.display = 'none';
+        advisor.style.display = 'block';
+        advisor.setAttribute('aria-hidden','false');
+        requestAnimationFrame(() => advisor.classList.add('show'));
+      }, 600);
+    }
+  }, stepMs);
+
+  // Make sure initial fades show
+  window.addEventListener('load', () => {
+    requestAnimationFrame(() => loading.classList.add('show'));
+  });
+</script>
+
+</body>
+</html>
